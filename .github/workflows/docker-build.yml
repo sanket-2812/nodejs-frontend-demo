@@ -21,30 +21,14 @@ jobs:
         run: echo "No tests yet"
       - name: Build Docker image
         run: docker build -t nodejs-frontend-demo .
-      - name: Call MCP server for PR report
+      - name: Generate PR report with MCP (stdio mode)
         if: github.event_name == 'pull_request'
         env:
-          MCP_SERVER_URL: ${{ secrets.MCP_SERVER_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Calling MCP server for PR report..."
-          set -e
+          echo "Generating PR report with MCP server (stdio mode)..."
           PR_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
-          API_URL="$MCP_SERVER_URL/pr-report"
-          PAYLOAD=$(jq -n --arg repo "$REPO" --arg pr "$PR_NUMBER" '{repo: $repo, pr: $pr}')
-          RESPONSE=$(curl -s -w "%{http_code}" -o mcp_report.json -X POST "$API_URL" -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/json" -d "$PAYLOAD" || true)
-          HTTP_CODE=$(tail -c 3 <<< "$RESPONSE")
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "MCP report generated successfully."
-            cat mcp_report.json
-          else
-            echo "MCP server call failed with HTTP $HTTP_CODE. See logs for troubleshooting."
-            cat mcp_report.json || true
-          fi
-      - name: Upload MCP report artifact
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: mcp-pr-report
-          path: mcp_report.json
+          # Example: Call MCP server locally in stdio mode
+          echo "{\"repo\": \"$REPO\", \"pr\": \"$PR_NUMBER\"}" | docker run --rm -i -e GITHUB_PERSONAL_ACCESS_TOKEN=$GITHUB_TOKEN ghcr.io/github/github-mcp-server stdio
+          echo "MCP report above is from stdio mode."
