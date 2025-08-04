@@ -29,6 +29,6 @@ jobs:
           echo "Generating PR report with MCP server (stdio mode)..."
           PR_NUMBER=${{ github.event.pull_request.number }}
           REPO=${{ github.repository }}
-          # Example: Call MCP server locally in stdio mode
-          echo "{\"repo\": \"$REPO\", \"pr\": \"$PR_NUMBER\"}" | docker run --rm -i -e GITHUB_PERSONAL_ACCESS_TOKEN=$GITHUB_TOKEN ghcr.io/github/github-mcp-server stdio
+          # Correct JSON-RPC request for MCP server
+          echo '{"jsonrpc":"2.0","id":1,"method":"pr.report","params":{"repo":"'"$REPO"'","pr":"'"$PR_NUMBER"'"}}' | docker run --rm -i -e GITHUB_PERSONAL_ACCESS_TOKEN=$GITHUB_TOKEN ghcr.io/github/github-mcp-server stdio
           echo "MCP report above is from stdio mode."
